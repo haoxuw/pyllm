@@ -1,0 +1,42 @@
+name: ci
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      ENV: "development"
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pylint pytest black isort
+
+      - name: Format
+        run: |
+          black . --check
+          isort . --check-only
+
+      - name: Linter
+        run: |
+          PYTHONPATH=. pylint pyllm
+
+      - name: Testing
+        run: |
+          ENV=development python -m pytest
